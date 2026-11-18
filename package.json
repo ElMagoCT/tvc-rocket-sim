@@ -1,0 +1,10 @@
+{
+  "name": "tvc-rocket-sim",
+  "private": true,
+  "type": "module",
+  "description": "TVC rocket: real CAD in 3D + flight simulation",
+  "scripts": {
+    "sim": "node tools/sim-check.mjs",
+    "serve": "python -m http.server 5391 --bind 127.0.0.1"
+  }
+}

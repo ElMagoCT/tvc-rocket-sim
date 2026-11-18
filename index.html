@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TVC Rocket</title>
+<meta name="description" content="A finless model rocket that steers itself with a gimballed motor: the real CAD in 3D and a full flight simulation from ignition to landing.">
+<meta name="theme-color" content="#0a0c0f">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 2c4 4 5 9 5 15v6h-10v-6c0-6 1-11 5-15z' fill='%23ff7a2f'/%3E%3Cpath d='M13 25h6l-1 5h-4z' fill='%2357d2ff'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+
+<nav class="topnav">
+  <a class="brand" href="#top">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 2c4 4 5 9 5 15v6h-10v-6c0-6 1-11 5-15z" fill="currentColor"/><path d="M13 25h6l-1 5h-4z" fill="var(--electric)"/></svg>
+    <span data-bind="name">TVC Rocket</span>
+  </a>
+  <div class="links">
+    <a href="#model">Model</a><a href="#sim">Flight sim</a><a href="#systems">Systems</a><a href="#specs">Specs</a>
+    <a class="gh" data-bind-href="repo" href="#" target="_blank" rel="noopener">GitHub</a>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <p class="eyebrow">Thrust vector control · no fins</p>
+  <h1>The motor is the <em>only</em> control surface.</h1>
+  <p class="lede" data-bind="tagline">A finless model rocket that steers itself with a gimballed motor.</p>
+  <ul class="stats" id="heroStats"></ul>
+</header>
+
+<main>
+  <!-- WINDOW 1 -->
+  <section class="window" id="model" aria-label="3D model">
+    <div class="titlebar">
+      <span class="wlabel"><b>01</b> Rocket <span class="dim">· v7 CAD, live</span></span>
+      <div class="seg" id="modeSeg" role="tablist" aria-label="What to show">
+        <button data-mode="tour" aria-pressed="true">Tour</button>
+        <button data-mode="gimbal">Gimbal</button>
+        <button data-mode="recovery">Recovery</button>
+        <button data-mode="power">Power</button>
+      </div>
+      <div class="seg small" id="tubeSeg" aria-label="Body tube">
+        <span class="seglabel">Tube</span>
+        <button data-tube="glass" aria-pressed="true">Glass</button>
+        <button data-tube="solid">Solid</button>
+        <button data-tube="hidden">Off</button>
+      </div>
+    </div>
+    <div class="stage model-stage">
+      <canvas id="modelCanvas" aria-label="Interactive 3D model of the rocket"></canvas>
+      <div class="overlay" id="modelOverlay"></div>
+      <div class="tooltip" id="modelTip" hidden></div>
+      <div class="readout" id="modelReadout"></div>
+      <p class="hint">Drag to orbit · scroll to zoom · hover a part</p>
+      <div class="loading" id="modelLoading"><span></span>Loading the CAD…</div>
+    </div>
+    <p class="caption" id="modelCaption"></p>
+  </section>
+
+  <!-- WINDOW 2 -->
+  <section class="window" id="sim" aria-label="Flight simulation">
+    <div class="titlebar">
+      <span class="wlabel"><b>02</b> Flight simulation <span class="dim">· ignition → landing</span></span>
+      <div class="seg" id="camSeg" aria-label="Camera">
+        <span class="seglabel">Camera</span>
+        <button data-cam="chase" aria-pressed="true">Chase</button>
+        <button data-cam="pad">Pad</button>
+        <button data-cam="orbit">Free</button>
+      </div>
+    </div>
+    <div class="stage flight-stage">
+      <canvas id="flightCanvas" aria-label="3D replay of the simulated flight"></canvas>
+      <div class="hud">
+        <div class="hud-top">
+          <div class="clock"><span id="hudClock">T−1.00</span><small>s</small></div>
+          <div class="phase" id="hudPhase" data-phase="PAD">PAD</div>
+        </div>
+        <ol class="checklist" id="hudEvents"></ol>
+        <dl class="gauges" id="hudGauges"></dl>
+      </div>
+      <div class="toast" id="toast" hidden></div>
+    </div>
+    <div class="transport">
+      <button class="play" id="playBtn" aria-label="Play"><svg viewBox="0 0 24 24"><path d="M7 5l12 7-12 7z"/></svg></button>
+      <div class="timeline" id="timeline">
+        <div class="tl-track" id="tlTrack"></div>
+        <input type="range" id="scrub" min="0" max="1000" value="0" step="1" aria-label="Flight time">
+      </div>
+      <div class="seg small" id="speedSeg" aria-label="Playback speed">
+        <button data-speed="auto" aria-pressed="true" title="1× with the long descent sped up">Auto</button>
+        <button data-speed="0.25">¼×</button>
+        <button data-speed="1">1×</button>
+        <button data-speed="4">4×</button>
+      </div>
+    </div>
+    <div class="simbar">
+      <label class="slider">Wind <input type="range" id="wind" min="0" max="8" step="0.5" value="2"><output id="windOut">2.0 m/s</output></label>
+      <button class="btn" id="gustBtn">New gusts</button>
+      <div class="summary" id="summary"></div>
+    </div>
+
+    <div class="charts-head">
+      <h3>Telemetry</h3>
+      <div class="seg small" id="winSeg" aria-label="Chart window">
+        <button data-win="all" aria-pressed="true">Whole flight</button>
+        <button data-win="boost">Burn</button>
+        <button data-win="apogee">Apogee</button>
+        <button data-win="landing">Landing</button>
+      </div>
+      <button class="btn ghost" id="csvBtn">Download log (CSV)</button>
+    </div>
+    <p class="charts-note">Click any chart to jump the replay there. Shaded: <span class="sw boost"></span>burn, <span class="sw desc"></span>under canopy.</p>
+    <h4 class="group">Sensors <small>what the flight computer reads</small></h4>
+    <div class="charts" id="chartsSensors"></div>
+    <h4 class="group">Outputs <small>what it decides and commands</small></h4>
+    <div class="charts" id="chartsOutputs"></div>
+  </section>
+
+  <section id="systems" class="block">
+    <h2>Systems</h2>
+    <div class="cards" id="systemCards"></div>
+  </section>
+
+  <section id="specs" class="block">
+    <h2>Specs</h2>
+    <p class="specs-note">Every number on this page comes from one file, <code>data/rocket.json</code>. Tags show where each one comes from; the team's measured values replace the placeholders as they come in.</p>
+    <div class="legend-status" id="statusLegend"></div>
+    <div class="spec-grid" id="specTable"></div>
+  </section>
+</main>
+
+<footer>
+  <p>Built from the v7 CAD and the TVC flight-computer firmware. The simulation is rigid-body physics with modelled sensors, so treat its numbers as predictions until flight data says otherwise.</p>
+  <p><a data-bind-href="repo" href="#" target="_blank" rel="noopener">Source on GitHub</a></p>
+</footer>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,75 @@
+{
+  "name": "TVC Rocket",
+  "tagline": "A finless model rocket that steers itself with a gimballed motor.",
+  "repo": "https://github.com/ElMagoCT/tvc-rocket-sim",
+
+  "_status_key": "official = measured / confirmed by the team; cad = computed from the v7 CAD; spec = manufacturer datasheet; sim = tuned in this simulator; estimate = placeholder until the official number arrives",
+
+  "specs": [
+    { "group": "Vehicle", "label": "Liftoff mass", "value": 156, "unit": "g", "status": "cad", "note": "PETG parts at 1.27 g/cm3 + D12, 3x SG90, XIAO, LiPo, boost" },
+    { "group": "Vehicle", "label": "Length", "value": 298, "unit": "mm", "status": "cad", "note": "motor nozzle to nose tip" },
+    { "group": "Vehicle", "label": "Body diameter", "value": 41.4, "unit": "mm", "status": "cad", "note": "tube OD" },
+    { "group": "Vehicle", "label": "Centre of gravity", "value": 124, "unit": "mm", "status": "cad", "note": "from the nozzle, at liftoff" },
+    { "group": "Vehicle", "label": "Fins", "value": "none", "unit": "", "status": "cad", "note": "stability comes only from the gimbal" },
+    { "group": "Vehicle", "label": "Material", "value": "PETG", "unit": "", "status": "official", "note": "printed upright, 0.16 mm layers" },
+
+    { "group": "Motor", "label": "Motor", "value": "Estes D12", "unit": "", "status": "official", "note": "24 x 70 mm" },
+    { "group": "Motor", "label": "Total impulse", "value": 16.8, "unit": "N s", "status": "spec", "note": "integrated from the thrust curve" },
+    { "group": "Motor", "label": "Peak thrust", "value": 29.7, "unit": "N", "status": "spec", "note": "at 0.28 s" },
+    { "group": "Motor", "label": "Burn time", "value": 1.65, "unit": "s", "status": "spec", "note": "" },
+
+    { "group": "Control", "label": "Gimbal range", "value": "±6", "unit": "deg", "status": "cad", "note": "clash-checked swing, both axes" },
+    { "group": "Control", "label": "Linkage ratio", "value": 1.89, "unit": ": 1", "status": "cad", "note": "14.7 mm stud radius / 7.78 mm horn hole" },
+    { "group": "Control", "label": "Control loop", "value": 200, "unit": "Hz", "status": "official", "note": "firmware LOOP_HZ" },
+    { "group": "Control", "label": "Servo frame rate", "value": 50, "unit": "Hz", "status": "official", "note": "LEDC PWM, 500-2500 us" },
+    { "group": "Control", "label": "Gimbal servos", "value": "2x SG90", "unit": "", "status": "official", "note": "pushrods to ball-joint studs at 45° and 135°" },
+
+    { "group": "Electronics", "label": "Flight computer", "value": "XIAO ESP32-S3", "unit": "", "status": "cad", "note": "Wi-Fi ground station built in" },
+    { "group": "Electronics", "label": "IMU", "value": "MPU6050", "unit": "", "status": "official", "note": "±16 g, ±2000°/s" },
+    { "group": "Electronics", "label": "Barometer", "value": "BMP280", "unit": "", "status": "official", "note": "apogee + landing detection" },
+    { "group": "Electronics", "label": "Battery", "value": "1S LiPo 300 mAh", "unit": "", "status": "cad", "note": "boosted to 5 V for the servos" },
+
+    { "group": "Recovery", "label": "Parachute", "value": 300, "unit": "mm", "status": "estimate", "note": "diameter, Cd 0.75" },
+    { "group": "Recovery", "label": "Deployment", "value": "servo latch", "unit": "", "status": "cad", "note": "third SG90 releases a key, spring throws the nose" }
+  ],
+
+  "motor": {
+    "name": "Estes D12",
+    "source": "RASP .eng from NAR certification data",
+    "curve": [
+      [0.049, 2.569], [0.116, 9.369], [0.184, 17.275], [0.237, 24.258], [0.282, 29.73], [0.297, 27.01],
+      [0.311, 22.589], [0.322, 17.99], [0.348, 14.126], [0.386, 12.099], [0.442, 10.808], [0.546, 9.876],
+      [0.718, 9.306], [0.879, 9.105], [1.066, 8.901], [1.257, 8.698], [1.436, 8.31], [1.59, 8.294],
+      [1.612, 4.613], [1.65, 0.0]
+    ]
+  },
+
+  "sim": {
+    "_note": "CAD numbers come from tools/export_glb.py (assets/rocket-geometry.json). Aero and sensor numbers are textbook estimates until flight data replaces them.",
+    "mass_g": 156.2, "propellant_g": 21.1, "propellant_z_mm": -12,
+    "cog_z_mm": 78.8, "pitch_inertia_g_mm2": 834118, "roll_inertia_g_mm2": 26000,
+    "pivot_z_mm": 34.83, "tail_z_mm": -44.84, "nose_z_mm": 253.16, "nose_base_z_mm": 196.9, "nose_cp_z_mm": 227,
+    "chute_attach_z_mm": 202.9, "imu_z_mm": 131, "diameter_mm": 41.4,
+
+    "air_density": 1.18, "cd_axial": 0.55, "cd_crossflow": 1.1, "cn_alpha_nose": 2.0,
+    "wind_mps": 2.0, "wind_from_deg": 250, "gust_mps": 0.6, "gust_tau_s": 1.5,
+    "thrust_misalign_deg": 0.4, "pad_tilt_deg": 0.6, "roll_torque_nm": 0.00002,
+
+    "arm_mm": 7.78, "stud_mm": 14.7, "gimbal_limit_deg": 6.0, "max_servo_deflection_deg": 20,
+    "servo_slew_dps": 400, "sg90_speed_dps": 600, "pwm_hz": 50, "loop_hz": 200,
+    "control": { "kp": 5.0, "ki": 0.5, "kd": 0.2, "thrust_schedule": true, "nominal_thrust_n": 9.0 },
+
+    "ignition_g": 2.0, "ignition_samples": 5,
+    "burnout_g": 0.5, "burnout_samples": 10,
+    "apogee_drop_m": 0.6, "landed_hold_s": 1.0, "landed_spread_m": 0.6,
+    "comp_filter": 0.98,
+    "gyro_noise_dps": 0.1, "accel_noise_g": 0.01, "motor_vibration_g": 0.12,
+    "baro_hz": 50, "baro_noise_m": 0.25, "baro_filter_s": 0.1,
+
+    "chute_diameter_mm": 300, "chute_cd": 0.75, "chute_inflation_s": 0.5, "chute_extract_s": 0.15,
+    "chute_swing_damping": 0.002,
+    "chute_stow_deg": 20, "chute_fire_deg": 140, "chute_release_deg": 40,
+
+    "pad_time_s": 1.0, "after_landing_s": 2.0, "max_time_s": 90, "dt_s": 0.0005, "log_hz": 100, "seed": 7
+  }
+}
